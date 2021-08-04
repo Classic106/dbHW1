@@ -1,5 +1,14 @@
+require('dotenv').config();
 const http = require("http");
 const url = require("url");
+const express = require("express");
+const mongoose = require("mongoose");
+
+/*
+.env settings
+  PORT=3001
+  DB="mongodb://localhost:27017/contacts"
+*/
 
 const {
   listContacts,
@@ -8,6 +17,22 @@ const {
   addContact,
   UpdateContact,
 } = require("./contacts");
+
+mongoose.connect(process.env.DB,
+  {
+    useUnifiedTopology: true,
+    useNewUrlParser: true,
+    useFindAndModify: false
+  }, 
+  function(err){
+    
+    if(err) return console.log(err);
+
+    server.listen(process.env.PORT, (err) => {
+      if (err) console.log(err);
+      console.log('Server started on port '+process.env.PORT);
+    });
+});
 
 const bodyGenerator = (req) => {
 
@@ -52,7 +77,7 @@ const CheckId = id => {
   
   if (Number.isNaN(Number(id))){
     res.statusCode = 400;
-    res.write({ message: "wrong contactId" });
+    res.write({ message: "Wrong contactId" });
     res.end();
     return true;
   }
@@ -63,10 +88,11 @@ const server = http.createServer(async (req, res) => {
 
   res.setHeader("Content-Type", "application/json");
 
-  if(req.url.includes('/api/contacts/')){
+  if(req.url.includes('/contacts/')){
     
-    const id = url.parse(req.url).query;
-   
+    //const id = url.parse(req.url).query;
+    let id = req.url.split('/')[2];
+
     if (CheckId(id)) return;
     
     switch(req.method){
@@ -97,7 +123,7 @@ const server = http.createServer(async (req, res) => {
     case 'GET':
 
       const contact = await getContactById(id);
-
+      
       if (contact.length !== 0) {
         res.write(JSON.stringify(contact[0]));
         res.end();
@@ -145,7 +171,7 @@ const server = http.createServer(async (req, res) => {
       }
     }
   }
-  else if(req.url.includes("/api/contacts")){
+  else if(req.url.includes("/contacts")){
     switch (req.method) {
 
       case "GET":
@@ -181,7 +207,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(3000, (err) => {
+/*server.listen(3000, (err) => {
   if (err) console.log(err);
   console.log("Server started on port 3000");
-});
+});*/
